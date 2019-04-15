@@ -29,7 +29,6 @@ func (dictionary *dictionary) prepareString(text string) []string {
 		stemmed, err := snowball.Stem(word, "russian", false)
 		if err == nil {
 			stemmedWords = append(stemmedWords, stemmed)
-			log.Infof(word + " -> " + stemmed)
 		}
 	}
 	return stemmedWords
