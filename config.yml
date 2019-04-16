@@ -1,8 +1,10 @@
 server:
   host: 0.0.0.0
-  port: 8080
-  read_timeout: 1s
-  write_timeout: 2s
+  port: 9001
+  read_timeout: 5s
+  write_timeout: 10s
+  graceful_timeout: 5s
+  max_keepalive: 5s
 
 pidfile: gocensor.pid
 log_level: info

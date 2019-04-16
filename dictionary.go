@@ -34,11 +34,10 @@ func (dictionary *dictionary) prepareString(text string) []string {
 	return stemmedWords
 }
 
-func (dictionary *dictionary) parseFile(filename string) {
+func (dictionary *dictionary) parseFile(filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		return err
 	}
 	defer file.Close()
 
@@ -52,4 +51,5 @@ func (dictionary *dictionary) parseFile(filename string) {
 	}
 	log.Infof("appended words")
 	dictionary.Unlock()
+	return nil
 }

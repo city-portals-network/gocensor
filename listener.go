@@ -11,16 +11,12 @@ import (
 type GracefulListener struct {
 	// inner listener
 	ln net.Listener
-
 	// maximum wait time for graceful shutdown
 	maxWaitTime time.Duration
-
 	// this channel is closed during graceful shutdown on zero open connections.
 	done chan struct{}
-
 	// the number of open connections
 	connsCount uint64
-
 	// becomes non-zero when graceful shutdown starts
 	shutdown uint64
 }

@@ -5,68 +5,59 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/buaazp/fasthttprouter"
+	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/reuseport"
 )
 
-type server struct {
+// Server defines all data
+type Server struct {
 	censor     *Censor
 	HTTPServer *fasthttp.Server
 	router     *fasthttprouter.Router
+	cfg        *Config
 }
 
 // NewServer creates a new HTTP Server
-func NewServer(censor *Censor) *server {
-
+func NewServer(censor *Censor, cfg *Config) *Server {
 	// define router
 	router := fasthttprouter.New()
-
 	// compression
 	handler := router.Handler
 	handler = fasthttp.CompressHandler(handler)
-
-	return &server{
+	return &Server{
 		censor:     censor,
-		HTTPServer: newHTTPServer(handler),
+		HTTPServer: newHTTPServer(handler, cfg),
 		router:     router,
+		cfg:        cfg,
 	}
 }
 
-// NewServer creates a new HTTP Server
-// TODO: configuration should be configurable
-func newHTTPServer(h fasthttp.RequestHandler) *fasthttp.Server {
+// newHTTPServer creates a new HTTP Server
+func newHTTPServer(h fasthttp.RequestHandler, cfg *Config) *fasthttp.Server {
 	return &fasthttp.Server{
 		Handler:              h,
-		ReadTimeout:          5 * time.Second,
-		WriteTimeout:         10 * time.Second,
-		MaxConnsPerIP:        500,
-		MaxRequestsPerConn:   500,
-		MaxKeepaliveDuration: 5 * time.Second,
+		ReadTimeout:          cfg.Server.ReadTimeout,
+		WriteTimeout:         cfg.Server.WriteTimeout,
+		MaxKeepaliveDuration: cfg.Server.MaxKeepalive,
 	}
 }
 
 // Run starts the HTTP server and performs a graceful shutdown
-func (s *server) Run() {
-	// NOTE: Package reuseport provides a TCP net.Listener with SO_REUSEPORT support.
-	// SO_REUSEPORT allows linear scaling server performance on multi-CPU servers.
-
-	// create a fast listener ;)
-	ln, err := reuseport.Listen("tcp4", "localhost:"+cfg.Server.Port)
+func (s *Server) Run() error {
+	ln, err := reuseport.Listen("tcp4", "localhost:"+s.cfg.Server.Port)
 	if err != nil {
-		log.Fatalf("error in reuseport listener: %s", err)
+		return errors.Wrap(err, "error in reuseport listener")
 	}
 
 	// create a graceful shutdown listener
-	duration := 5 * time.Second
-	graceful := NewGracefulListener(ln, duration)
-
+	graceful := NewGracefulListener(ln, s.cfg.Server.GracefulTimeout)
 	// Get hostname
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Fatalf("hostname unavailable: %s", err)
+		return errors.Wrap(err, "hostname reuse port")
 	}
 
 	// Error handling
@@ -74,7 +65,7 @@ func (s *server) Run() {
 
 	/// Run server
 	go func() {
-		log.Printf("%s - Web server starting on port %v", hostname, graceful.Addr())
+		log.Printf("%s - Web server starting on port http://%v", hostname, graceful.Addr())
 		log.Printf("%s - Press Ctrl+C to stop", hostname)
 		// listenErr <- s.HTTPServer.ListenAndServe(":" + cfg.Port)
 		listenErr <- s.HTTPServer.Serve(graceful)
@@ -88,13 +79,10 @@ func (s *server) Run() {
 	// Handle channels/graceful shutdown
 	for {
 		select {
-		// If server.ListenAndServe() cannot start due to errors such
-		// as "port in use" it will return an error.
 		case err := <-listenErr:
 			if err != nil {
-				log.Fatalf("listener error: %s", err)
+				return errors.Wrap(err, "port in use")
 			}
-			os.Exit(0)
 		// handle termination signal
 		case <-osSignals:
 			fmt.Printf("\n")
@@ -111,6 +99,7 @@ func (s *server) Run() {
 			}
 
 			log.Printf("%s - Server gracefully stopped.\n", hostname)
+			os.Exit(0)
 		}
 	}
 }

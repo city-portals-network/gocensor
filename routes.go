@@ -1,16 +1,7 @@
 package main
 
-func (s *server) Routes() {
-
-	// Basics
+// Routes defines all routes in gocensor server
+func (s *Server) Routes() {
 	s.router.GET("/", s.index)
-	// s.router.GET("/long", s.longRunning)
-
-	// // Kubernetes
-	// s.router.GET("/healthz", s.healthz)
-	// s.router.GET("/readyz", s.readyz)
-
-	// // Monitoring
-	// s.router.GET("/stats", expvarhandler.ExpvarHandler)
-
+	// s.router.GET("/long", s.longRunning
 }

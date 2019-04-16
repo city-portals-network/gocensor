@@ -21,11 +21,10 @@ Options:
                                  CLI args overwrite parameters in config file.
   --host <host>                HTTP Server host.
   --port <port>                HTTP Server port.
-  -V --version                 Print program version.
   -h --help                    Show this screen.
 `
 
-const welcomeMessage = `Paged is running!
+const welcomeMessage = `Gocensor is running!
 
 PID: %+v
 
@@ -36,37 +35,31 @@ HTTP server configuration: %v
 `
 
 var (
-	version  = "dev"
-	hostname string
-	log      *logrus.Logger
-	cfg      *Config
+	version = "dev"
+	log     *logrus.Logger
 )
 
 func main() {
-	var err error
 
-	cfg = createConfig(parseCLIArgs())
+	cfg := createConfig(parseCLIArgs())
 	createPidFile(cfg.Pidfile)
 
-	hostname, err = os.Hostname()
-	if err != nil {
-		log.Fatalln(errors.Wrap(err, "get hostname failed"))
-	}
 	renderWelcomeScreen(cfg)
 	initializeLogger()
 	setVerbosityLevel(cfg)
 
-	censor := NewCensor()
-	// setup and run server
-	server := NewServer(censor)
+	censor, err := NewCensor()
+	if err != nil {
+		log.Fatalln(err)
+		os.Exit(1)
+	}
+	server := NewServer(censor, cfg)
 	server.Routes()
-	server.Run()
-
-	// if censor.run("Фильм \"Дурак\" напоминает. Наверняка были предпосылки, но чьё-то авось, преступная халатность или жадность довели до трагедии ни в ") {
-	// 	log.Infof("True")
-	// } else {
-	// 	log.Infof("FALSE")
-	// }
+	err = server.Run()
+	if err != nil {
+		log.Fatalln(err)
+		os.Exit(1)
+	}
 }
 
 func setVerbosityLevel(config *Config) {

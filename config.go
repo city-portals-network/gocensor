@@ -12,10 +12,9 @@ import (
 
 type cliArgs map[string]interface{}
 
-//TODO add config.yml
+//Config defines app config from
 type Config struct {
 	Server           *ServerConfig `yaml:"server"`
-	Compress         bool          `env:"COMPRESS"`
 	Port             string        `yaml:"server.port"`
 	Pidfile          string        `yaml:"pidfile"`
 	LogLevel         logrus.Level  `yaml:"-"`
@@ -23,28 +22,24 @@ type Config struct {
 	Debug            bool          `yaml:"debug"`
 }
 
-// ServerConfig конфигурация сервера
+// ServerConfig defines server configuration
 type ServerConfig struct {
-	Host               string `yaml:"host"`
-	Port               string `yaml:"port"`
-	ReadTimeoutString  string `yaml:"read_timeout"`
-	WriteTimeoutString string `yaml:"write_timeout"`
-	// подготовленные данные:
-	// host + port
-	ListenAddr string
-	// значения таймаутов после парсинга
-	// строковых значений из yml
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
+	Host                  string `yaml:"host"`
+	Port                  string `yaml:"port"`
+	ReadTimeoutString     string `yaml:"read_timeout"`
+	WriteTimeoutString    string `yaml:"write_timeout"`
+	GracefulTimeoutString string `yaml:"graceful_timeout"`
+	MaxKeepaliveString    string `yaml:"max_keepalive"`
+	ListenAddr            string
+	ReadTimeout           time.Duration
+	WriteTimeout          time.Duration
+	GracefulTimeout       time.Duration
+	MaxKeepalive          time.Duration
 }
 
-// Parse парсит значения конфига и
-// проверяет их валидность
+// Parse defines server config and check validation
 func (config *ServerConfig) Parse() error {
-	config.ListenAddr =
-		config.Host + ":" +
-			config.Port
-
+	config.ListenAddr = config.Host + ":" + config.Port
 	var err error
 	config.ReadTimeout, err = time.ParseDuration(
 		config.ReadTimeoutString,
@@ -58,6 +53,20 @@ func (config *ServerConfig) Parse() error {
 	if err != nil {
 		return errors.Wrap(err, "invalid write timeout")
 	}
+
+	config.GracefulTimeout, err = time.ParseDuration(
+		config.GracefulTimeoutString,
+	)
+	if err != nil {
+		return errors.Wrap(err, "invalid graceful timeout")
+	}
+	config.MaxKeepalive, err = time.ParseDuration(
+		config.MaxKeepaliveString,
+	)
+	if err != nil {
+		return errors.Wrap(err, "invalid max keepalive")
+	}
+
 	return nil
 }
 
@@ -75,7 +84,7 @@ func createConfig(args cliArgs) *Config {
 	return config
 }
 
-// Parse проверяет валидность всех параметров конфигурации
+// Parse check valid yaml file
 func (config *Config) Parse() error {
 	var err error
 	err = config.Server.Parse()
@@ -94,7 +103,7 @@ func (config *Config) Parse() error {
 	return nil
 }
 
-// NewConfigFromYamlFile вернет Config с данными из yaml файла.
+// NewConfigFromYamlFile defines Config with parsed yaml file
 func NewConfigFromYamlFile(path string) (*Config, error) {
 	_, err := os.Stat(path)
 	if err != nil {
