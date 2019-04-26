@@ -15,8 +15,11 @@ type cliArgs map[string]interface{}
 //Config defines app config from
 type Config struct {
 	Server           *ServerConfig `yaml:"server"`
+	MySQL            *MySQLConfig  `yaml:"mysql"`
 	Port             string        `yaml:"server.port"`
 	Pidfile          string        `yaml:"pidfile"`
+	Filename         string        `yaml:"filename"`
+	Source           string        `yaml:"source"`
 	LogLevel         logrus.Level  `yaml:"-"`
 	LogLevelAsString string        `yaml:"log_level"`
 	Debug            bool          `yaml:"debug"`
@@ -50,6 +53,7 @@ func (config *ServerConfig) Parse() error {
 	config.WriteTimeout, err = time.ParseDuration(
 		config.WriteTimeoutString,
 	)
+
 	if err != nil {
 		return errors.Wrap(err, "invalid write timeout")
 	}
@@ -71,17 +75,20 @@ func (config *ServerConfig) Parse() error {
 }
 
 //
-func createConfig(args cliArgs) *Config {
+func createConfig(args cliArgs) (*Config, error) {
 	config, err := NewConfigFromYamlFile(args["--config"].(string))
 	if err != nil {
 		log.Fatalln(errors.Wrapf(err, "new config from yaml file"))
+		return nil, err
 	}
+
 	// config.OverwriteWithCLIArgs(args)
 	err = config.Parse()
 	if err != nil {
-		log.Fatalln(errors.Wrap(err, "parse config"))
+		return nil, err
+
 	}
-	return config
+	return config, nil
 }
 
 // Parse check valid yaml file
@@ -90,6 +97,23 @@ func (config *Config) Parse() error {
 	err = config.Server.Parse()
 	if err != nil {
 		return errors.Wrap(err, "parse rest server config")
+	}
+
+	if config.Source == "mysql" {
+		if config.MySQL == nil {
+			return errors.New("mysql config is not defined")
+		}
+		err = config.MySQL.Parse()
+		if err != nil {
+			return errors.Wrap(err, "parse mysql config")
+		}
+	} else if config.Source == "file" {
+		log.Infoln("Use " + config.Filename)
+		if config.Filename == "" {
+			return errors.New("undefined source dict File")
+		}
+	} else {
+		return errors.New("undefined source dict")
 	}
 
 	if config.LogLevelAsString == "" {
@@ -113,10 +137,13 @@ func NewConfigFromYamlFile(path string) (*Config, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "reading file \"%s\" failed", path)
 	}
+
 	config := &Config{}
+
 	err = yaml.Unmarshal(file, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "yaml unmarshal failed")
 	}
+	log.Infoln(config.Source)
 	return config, nil
 }

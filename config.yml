@@ -1,11 +1,33 @@
 server:
   host: 0.0.0.0
-  port: 9001
+  port: 9002
   read_timeout: 5s
   write_timeout: 10s
   graceful_timeout: 5s
   max_keepalive: 5s
-
+source: file
+filename: dictionary.txt
 pidfile: gocensor.pid
 log_level: info
 debug: false
+# mysql:
+#   master:
+#     host: 127.0.0.1
+#     port: 3306
+#     base: censor
+#     user: censor
+#     password: censor
+#     parameters:
+#       max_idle_conns: 100
+#       max_open_conns: 100
+#       conn_max_lifetime: 30s
+#   slave:
+#     host: 127.0.0.1
+#     port: 3306
+#     base: censor
+#     user: censor
+#     password: censor
+#     parameters:
+#       max_idle_conns: 100
+#       max_open_conns: 100
+#       conn_max_lifetime: 30s

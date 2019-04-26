@@ -1,4 +1,4 @@
-# gocensor [![goreport](https://goreportcard.com/badge/github.com/d2one/gocensor)](https://goreportcard.com/report/github.com/d2one/gocensor) 
+# gocensor [![goreport](https://goreportcard.com/badge/github.com/city-portals-network/gocensor)](https://goreportcard.com/report/github.com/city-portals-network/gocensor) 
 
 #Цензор матерных слов
 - [x] add parse config

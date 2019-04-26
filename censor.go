@@ -1,14 +1,14 @@
 package main
 
+import "fmt"
+
 // Censor ds
 type Censor struct {
-	dictionary *dictionary
+	dictionary *Dictionary
 }
 
 //NewCensor defines new censor instance
-func NewCensor() (*Censor, error) {
-	words := make(map[string]bool)
-	dictionary := &dictionary{words: words}
+func NewCensor(dictionary *Dictionary) (*Censor, error) {
 	if err := dictionary.parseFile("dictionary.txt"); err != nil {
 		return nil, err
 	}
@@ -24,4 +24,13 @@ func (censor *Censor) run(comment string) bool {
 		}
 	}
 	return false
+}
+
+func (censor *Censor) update(word string) bool {
+	fmt.Println(word)
+	return true
+}
+
+func (censor *Censor) reload() bool {
+	return true
 }

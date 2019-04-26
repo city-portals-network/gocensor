@@ -40,15 +40,24 @@ var (
 )
 
 func main() {
+	initializeLogger()
+	cfg, err := createConfig(parseCLIArgs())
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-	cfg := createConfig(parseCLIArgs())
 	createPidFile(cfg.Pidfile)
 
 	renderWelcomeScreen(cfg)
-	initializeLogger()
+
 	setVerbosityLevel(cfg)
 
-	censor, err := NewCensor()
+	var source Source
+	if cfg.Source == "file" {
+		source = NewFileSource(cfg.Filename)
+	}
+	dictionary := NewDictionary(source)
+	censor, err := NewCensor(dictionary)
 	if err != nil {
 		log.Fatalln(err)
 		os.Exit(1)
@@ -100,4 +109,18 @@ func renderWelcomeScreen(config *Config) {
 		config.LogLevel.String(),
 		config.Server,
 	)
+}
+
+//
+func createMySQL(config *Config) *MySQL {
+	mysql := NewMySQL(config.MySQL)
+	err := mysql.OpenConnections()
+	if err != nil {
+		log.Fatalln(errors.Wrap(err, "open mysql connections"))
+	}
+	err = mysql.Ping()
+	if err != nil {
+		log.Errorln(errors.Wrap(err, "mysql ping"))
+	}
+	return mysql
 }

@@ -10,13 +10,25 @@ import (
 	"github.com/kljensen/snowball"
 )
 
-// dictionary ds
-type dictionary struct {
+// Dictionary ds
+type Dictionary struct {
+	Source Source
 	sync.Mutex
 	words map[string]bool
 }
 
-func (dictionary *dictionary) prepareString(text string) []string {
+//NewDictionary return dict
+func NewDictionary(source Source) *Dictionary {
+	words := make(map[string]bool)
+	return &Dictionary{Source: source, words: words}
+}
+
+func (dictionary *Dictionary) parse() {
+	words, _ := dictionary.Source.parse()
+	dictionary.words = words
+}
+
+func (dictionary *Dictionary) prepareString(text string) []string {
 	reg, _ := regexp.Compile("[^a-zа-я]+")
 	text = reg.ReplaceAllLiteralString(text, " ")
 	text = strings.ToLower(text)
@@ -34,7 +46,7 @@ func (dictionary *dictionary) prepareString(text string) []string {
 	return stemmedWords
 }
 
-func (dictionary *dictionary) parseFile(filename string) error {
+func (dictionary *Dictionary) parseFile(filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		return err
