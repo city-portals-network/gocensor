@@ -1,3 +1,4 @@
 gocensor
 vendor
+.vscode
 gocensor.pid

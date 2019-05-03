@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 // Censor ds
 type Censor struct {
 	dictionary *Dictionary
@@ -9,7 +7,7 @@ type Censor struct {
 
 //NewCensor defines new censor instance
 func NewCensor(dictionary *Dictionary) (*Censor, error) {
-	if err := dictionary.parseFile("dictionary.txt"); err != nil {
+	if err := dictionary.parse(); err != nil {
 		return nil, err
 	}
 	censor := &Censor{dictionary: dictionary}
@@ -27,7 +25,6 @@ func (censor *Censor) run(comment string) bool {
 }
 
 func (censor *Censor) update(word string) bool {
-	fmt.Println(word)
 	return true
 }
 

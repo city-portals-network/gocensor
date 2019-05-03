@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -23,9 +21,41 @@ func NewDictionary(source Source) *Dictionary {
 	return &Dictionary{Source: source, words: words}
 }
 
-func (dictionary *Dictionary) parse() {
-	words, _ := dictionary.Source.parse()
+func (dictionary *Dictionary) parse() error {
+	words, err := dictionary.Source.parse()
+	if err != nil {
+		return err
+	}
+	dictionary.Lock()
 	dictionary.words = words
+	dictionary.Unlock()
+	return nil
+}
+
+func (dictionary *Dictionary) append(word string) error {
+	err := dictionary.Source.append(word)
+	if err != nil {
+		return err
+	}
+	dictionary.Lock()
+	dictionary.words[word] = true
+	dictionary.Unlock()
+	return nil
+}
+
+func (dictionary *Dictionary) delete(word string) error {
+	err := dictionary.Source.delete(word)
+	if err != nil {
+		return err
+	}
+	dictionary.Lock()
+	delete(dictionary.words, word)
+	dictionary.Unlock()
+	return nil
+}
+
+func (dictionary *Dictionary) reload() error {
+	return dictionary.parse()
 }
 
 func (dictionary *Dictionary) prepareString(text string) []string {
@@ -44,24 +74,4 @@ func (dictionary *Dictionary) prepareString(text string) []string {
 		}
 	}
 	return stemmedWords
-}
-
-func (dictionary *Dictionary) parseFile(filename string) error {
-	file, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	dictionary.Lock()
-	for scanner.Scan() {
-		words := dictionary.prepareString(scanner.Text())
-		for _, word := range words {
-			dictionary.words[word] = true
-		}
-	}
-	log.Infof("appended words")
-	dictionary.Unlock()
-	return nil
 }
