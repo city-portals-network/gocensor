@@ -12,8 +12,11 @@ type FileSource struct {
 	File       *os.File
 }
 
-func NewFileSource(filename string) *FileSource {
-	return &FileSource{FileSource: filename}
+func NewFileSource(filename string) (*FileSource, error) {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return nil, errors.Wrap(err, "file  "+filename)
+	}
+	return &FileSource{FileSource: filename}, nil
 }
 
 func (s *FileSource) append(word string) error {
@@ -24,7 +27,7 @@ func (s *FileSource) append(word string) error {
 
 	defer file.Close()
 
-	if _, err = file.WriteString(word); err != nil {
+	if _, err = file.WriteString(word + "\r\n"); err != nil {
 		return errors.Wrap(err, "cant append to file "+s.FileSource)
 	}
 	return nil

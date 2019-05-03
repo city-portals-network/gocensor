@@ -54,7 +54,10 @@ func main() {
 
 	var source Source
 	if cfg.Source == "file" {
-		source = NewFileSource(cfg.Filename)
+		source, err = NewFileSource(cfg.Filename)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 	dictionary := NewDictionary(source)
 	censor, err := NewCensor(dictionary)
