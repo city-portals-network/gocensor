@@ -14,20 +14,34 @@ func NewCensor(dictionary *Dictionary) (*Censor, error) {
 	return censor, nil
 }
 
-func (censor *Censor) run(comment string) bool {
+func (censor *Censor) check(comment string) *CensorResponse {
+	response := NewCensorResponse(comment)
 	words := censor.dictionary.prepareString(comment)
 	for _, word := range words {
 		if censor.dictionary.words[word] {
-			return true
+			return response.setResult(true)
 		}
 	}
-	return false
+	return response.setResult(false)
 }
 
-func (censor *Censor) update(word string) bool {
-	return true
+func (censor *Censor) append(word string) error {
+	if err := censor.dictionary.append(word); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (censor *Censor) reload() bool {
-	return true
+func (censor *Censor) delete(word string) error {
+	if err := censor.dictionary.delete(word); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (censor *Censor) reload() error {
+	if err := censor.dictionary.parse(); err != nil {
+		return err
+	}
+	return nil
 }

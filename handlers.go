@@ -1,26 +1,46 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"time"
-
 	"github.com/valyala/fasthttp"
 )
 
-func (s *Server) index(ctx *fasthttp.RequestCtx) {
-	t := time.Now()
+func (s *Server) check(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 	query := string(ctx.QueryArgs().Peek("query"))
-
-	result := s.censor.run(string(query))
-	serverResponse := NewCensorResponse(query, result, nil)
-	serverResponse.setRequestTime(time.Since(t).String())
-
-	body, err := json.Marshal(serverResponse)
-	if err != nil {
-		fmt.Printf("Error: %s", err)
-		return
+	result := s.censor.check(string(query))
+	body := sendSuccessOKWithResult("success", result)
+	if result.Err != nil {
+		body = sendProblemBadRequest("error", result)
 	}
 	ctx.SetBody(body)
+}
+
+func (s *Server) delete(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+	word := ctx.PostArgs().Peek("word")
+
+	if err := s.censor.delete(string(word)); err != nil {
+		ctx.SetBody(sendProblemBadRequest("delete error", err))
+	} else {
+		ctx.SetBody(sendSuccessOK("delete success"))
+	}
+}
+func (s *Server) reload(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+	if err := s.censor.reload(); err != nil {
+		ctx.SetBody(sendProblemBadRequest("reload error", err))
+	} else {
+		ctx.SetBody(sendSuccessOK("reload success"))
+	}
+}
+
+func (s *Server) append(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+	word := ctx.PostArgs().Peek("word")
+
+	if err := s.censor.append(string(word)); err != nil {
+		ctx.SetBody(sendProblemBadRequest("append error", err))
+	} else {
+		ctx.SetBody(sendSuccessOK("append success"))
+	}
 }

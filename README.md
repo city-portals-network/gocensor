@@ -3,9 +3,17 @@
 #Цензор матерных слов
 - [x] add parse config
 - [] add health response
-- [] add POST ro add dict
+- [x] add POST ro add dict
 - [] add PKGBUILD
 - [] add systemd unit
 - [] tests
+- [] validation input params
+
+/v1/censor/append POST {word:data}
+/v1/censor/delete POST {word:data}
+/v1/censor/reload GET
+/v1/censor/check GET
+/v1/status GET
+
 
 https://github.com/vearutop/php-obscene-censor-rus

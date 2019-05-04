@@ -2,26 +2,25 @@ package main
 
 // CensorResponse defines http response
 type CensorResponse struct {
-	Query       string `json:"query"`
-	Result      bool   `json:"result"`
-	Err         error  `json:"error"`
-	StatusCode  int    `json:"StatusCode"`
-	RequestTime string `json:"RequestTime"`
+	Query  string `json:"query"`
+	Result bool   `json:"result"`
+	Err    error  `json:"error"`
 }
 
-func (cr *CensorResponse) setRequestTime(requestTime string) {
-	cr.RequestTime = requestTime
+func (cr *CensorResponse) setResult(result bool) *CensorResponse {
+	cr.Result = result
+	return cr
+}
+
+func (cr *CensorResponse) setError(err error) *CensorResponse {
+	cr.Err = err
+	return cr
 }
 
 // NewCensorResponse creates new http censor response
-func NewCensorResponse(query string, result bool, err error) *CensorResponse {
-	statusCode := 200
-	if err != nil {
-		statusCode = 500
-	}
+func NewCensorResponse(query string) *CensorResponse {
 	return &CensorResponse{
-		Query:      query,
-		Result:     result,
-		StatusCode: statusCode,
+		Query:  query,
+		Result: false,
 	}
 }
