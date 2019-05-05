@@ -22,12 +22,18 @@ func NewDictionary(source Source) *Dictionary {
 }
 
 func (dictionary *Dictionary) parse() error {
+	wordsPrepared := make(map[string]bool)
 	words, err := dictionary.Source.parse()
 	if err != nil {
 		return err
 	}
+
+	for word, _ := range words {
+		stemWord := dictionary.stemWord(word)
+		wordsPrepared[stemWord] = true
+	}
 	dictionary.Lock()
-	dictionary.words = words
+	dictionary.words = wordsPrepared
 	dictionary.Unlock()
 	return nil
 }
@@ -68,10 +74,16 @@ func (dictionary *Dictionary) prepareString(text string) []string {
 		if len([]rune(word)) < 2 {
 			continue
 		}
-		stemmed, err := snowball.Stem(word, "russian", false)
-		if err == nil {
-			stemmedWords = append(stemmedWords, stemmed)
-		}
+		sWord := dictionary.stemWord(word)
+		stemmedWords = append(stemmedWords, sWord)
 	}
 	return stemmedWords
+}
+
+func (dictionary *Dictionary) stemWord(word string) string {
+	stemmed, err := snowball.Stem(word, "russian", false)
+	if err == nil {
+		return stemmed
+	}
+	return word
 }

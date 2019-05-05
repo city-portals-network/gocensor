@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/pkg/errors"
 )
 
 type Operation struct {
@@ -75,8 +73,10 @@ func sendProblem(status int, detail string, args ...interface{}) interface{} {
 	}
 }
 
-func sendProblemNotFound(detail string, args ...interface{}) (int, interface{}) {
-	return 0, sendProblem(http.StatusNotFound, detail, args...)
+func sendProblemNotFound(detail string, args ...interface{}) []byte {
+	response := sendProblem(http.StatusNotFound, detail, args...)
+	body, _ := json.Marshal(response)
+	return body
 }
 
 func sendProblemBadRequest(detail string, args ...interface{}) []byte {
@@ -90,16 +90,5 @@ func sendProblemInternalServerError(detail string, args ...interface{}) (int, in
 }
 
 func sendProblemPageNotFound(id int) (int, interface{}) {
-	return sendProblemNotFound("Page \"%d\" not found.", id)
-}
-
-func sendProblemSpecNotFound(id int) (int, interface{}) {
-	return sendProblemNotFound("Spec \"%d\" not found.", id)
-}
-
-func sendProblemParameterMustBeInteger(parameterName string, err error) (int, interface{}) {
-	return 0, sendProblemBadRequest(
-		errors.Wrapf(err, "Can't parse parameter \"%s\". "+
-			"Parameter must be integer", parameterName).Error(),
-	)
+	return 0, sendProblemNotFound("Page \"%d\" not found.", id)
 }

@@ -7,10 +7,15 @@ import (
 func (s *Server) check(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 	query := string(ctx.QueryArgs().Peek("query"))
-	result := s.censor.check(string(query))
-	body := sendSuccessOKWithResult("success", result)
-	if result.Err != nil {
-		body = sendProblemBadRequest("error", result)
+	var body []byte
+	if query == "" {
+		body = sendProblemBadRequest("error", "required")
+	} else {
+		result := s.censor.check(string(query))
+		body = sendSuccessOKWithResult("success", result)
+		if result.Err != nil {
+			body = sendProblemBadRequest("error", result)
+		}
 	}
 	ctx.SetBody(body)
 }
